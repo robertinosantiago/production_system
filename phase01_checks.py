@@ -1,48 +1,33 @@
 import logging
 import re
+from datetime import datetime
+
+from error import Error
 
 class Phase01Checks:
     
     def __init__(self):
         pass
-        
     
-    def zero_numbers(self, wm, rule_name):
-        expression = wm.get_fact('expression')
+    def zero_numbers(self, wm):
+        logging.info(f'Executando função: zero_numbers')
         result = wm.get_fact('result')
+        return len(result) == 0
         
-        logging.info(f'Executando a regra: {rule_name}')
-                
-        if len(result) == 0:
-            wm.add_fact('valid', False)
-            logging.info(f'Confirmado regra: {rule_name}')
-        
-    def more_numbers(self, wm, rule_name):
-        expression = wm.get_fact('expression')
+    def more_numbers(self, wm):
+        logging.info(f'Executando função: more_numbers')
         result = wm.get_fact('result')
-        
-        logging.info(f'Executando a regra: {rule_name}')
-        
-        if len(result) > 1:
-            wm.add_fact('valid', False)
-            logging.info(f'Confirmado regra: {rule_name}')
+        return len(result) > 1
             
-    def one_number(self, wm, rule_name):
-        expression = wm.get_fact('expression')
+    def one_number(self, wm):
         result = wm.get_fact('result')
-        
-        logging.info(f'Executando a regra: {rule_name}')
-        
-        if len(result) == 1:
-            wm.add_fact('valid', True)
-            logging.info(f'Confirmado regra: {rule_name}')
-        
+        logging.info(f'Executando função: one_number')
+        return len(result) == 1
     
-    def union_terms(self, wm, rule_name):
+    def union_terms(self, wm):
+        logging.info(f'Executando função: union_terms')
         expression = wm.get_fact('expression')
         result = wm.get_fact('result')
-        
-        logging.info(f'Executando a regra: {rule_name}')
         
         valid = wm.get_fact('valid')
                 
@@ -53,18 +38,16 @@ class Phase01Checks:
             numbers_expression = r.sub('', part1).strip()
                         
             result = ''.join(str(e) for e in result).strip()
-             
-            if result == numbers_expression:
-                logging.info(f'Confirmado regra: {rule_name}')
-                wm.add_fact('error_type', 'diretamente_identificaveis')
-                wm.add_fact('error_subtype', 'deficiencia_regra')
+
+            return result == numbers_expression
+        
+        return False
     
-    def switched_operators(self, wm, rule_name):
+    def switched_operators(self, wm):
+        logging.info(f'Executando função: switched_operators')
+        
         expression = wm.get_fact('expression')
         result = wm.get_fact('result')
-        
-        logging.info(f'Executando a regra: {rule_name}')
-        
         valid = wm.get_fact('valid')
         
         if valid:
@@ -115,17 +98,15 @@ class Phase01Checks:
                         if n1 - n2 + n3 == result:
                             is_switched = True
             
-            if (is_switched):
-                logging.info(f'Confirmado regra: {rule_name}')
-                wm.add_fact('error_type', 'diretamente_identificaveis')
-                wm.add_fact('error_subtype', 'uso_operador')
+            return is_switched
+        
+        return False
                 
-    def wrong_answer(self, wm, rule_name):
+    def wrong_answer(self, wm):
+        logging.info(f'Executando função: wrong_answer')
+        
         expression = wm.get_fact('expression')
         result = wm.get_fact('result')
-        
-        logging.info(f'Executando a regra: {rule_name}')
-        
         valid = wm.get_fact('valid')
             
         if valid:
@@ -133,8 +114,30 @@ class Phase01Checks:
             part1, part2 = expression.split('=')
             n = int(part2[0])
             
-            if n != result:
-                logging.info(f'Confirmado regra: {rule_name}')
-                wm.add_fact('error_type', 'diretamente_identificaveis')
-                wm.add_fact('error_subtype', 'deficiencia_dominio')
+            return n != result
+                
+        return False
         
+    def long_time(self, wm):
+        logging.info(f'Executando função: long_time')
+        valid = wm.get_fact('valid')
+        
+        in_time = False
+        now = datetime.now()
+        
+        if valid:
+            last_execution = wm.get_fact('last_execution')
+            total_time = now - last_execution
+            seconds = total_time.total_seconds()
+            '''
+            @ToDo calcular o tempo gasto teto em tempo de execução
+            '''
+            in_time = seconds > 4
+                
+        wm.add_fact('last_execution', now)
+        return in_time
+    
+    def is_correct(self, wm):
+        logging.info(f'Executando função: is_correct')
+        correct = wm.get_fact('correct')
+        print("Correct: ", correct)
